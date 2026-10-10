@@ -447,6 +447,9 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A bare ⌫ in an empty field walks the same path Escape does
 - General ▸ Escape Key Behavior set to `Close window and pop to root`: Escape on sub-screens closes
   the window, and reopening lands on the root search whatever Pop to Root Search says
+- The App Launcher shortcut on a submenu hides the palette, and a reopen inside Pop to Root Search
+  restores the submenu with its query; with General ▸ Launcher shortcut submenu behavior set to
+  `Pop to root` the same press lands on the root search, and the next one hides
 - Reopening focuses the search field with an empty query, in the same position and at the same size
 - Compact mode: typing expands it, and the search bar does **not** shift vertically during the swap
 - Compact mode: the opening frames show no shortcut fill beneath the query before the buttons emerge
