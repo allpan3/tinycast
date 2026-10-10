@@ -135,6 +135,9 @@ enum SettingsSearchCatalog {
             .generalGeneral, "Escape Key Behavior",
             keywords: ["escape", "esc", "back", "close", "navigate"]),
         .init(
+            .generalGeneral, "Launcher shortcut submenu behavior",
+            keywords: ["hotkey", "shortcut", "toggle", "close", "hide", "root"]),
+        .init(
             .generalGeneral, "Auto-switch input source",
             keywords: ["keyboard", "layout", "language", "abc"]),
         .init(
