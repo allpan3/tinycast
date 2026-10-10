@@ -69,6 +69,14 @@ struct GeneralSettingsView: View {
                     SettingsRowTitle(.generalGeneral, "Escape Key Behavior")
                     Text("When the search field is empty.")
                 }
+                Picker(selection: $settings.launcherShortcutBehavior) {
+                    ForEach(LauncherShortcutBehavior.allCases) { behavior in
+                        Text(behavior.title).tag(behavior)
+                    }
+                } label: {
+                    SettingsRowTitle(.generalGeneral, "Launcher shortcut submenu behavior")
+                    Text("When a submenu is open. Hiding keeps its state until the reset timeout.")
+                }
                 // Empty only when TIS fails; one layout still lists, so the row stays put.
                 if !inputSources.isEmpty {
                     Picker(selection: $settings.autoSwitchInputSourceID) {

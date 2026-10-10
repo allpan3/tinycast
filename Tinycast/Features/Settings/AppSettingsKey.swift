@@ -17,6 +17,7 @@ enum AppSettingsKey: String, CaseIterable {
     case automaticallyCheckForUpdates = "automaticallyCheckForUpdates"
     case popToRootTimeout = "popToRootTimeout"
     case escapeKeyBehavior = "escapeKeyBehavior"
+    case launcherShortcutBehavior = "launcherShortcutBehavior"
     case appearance = "appearance"
     case calcNumberStyle = "calculatorNumberStyle"
     case interfaceSize = "interfaceSize"
