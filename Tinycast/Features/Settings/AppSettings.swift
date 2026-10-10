@@ -215,6 +215,14 @@ final class AppSettings {
         didSet { defaults.set(escapeKeyBehavior.rawValue, forKey: Key.escapeKeyBehavior.rawValue) }
     }
 
+    /// Whether the launcher shortcut closes an open palette or first falls to the root search.
+    var launcherShortcutBehavior: LauncherShortcutBehavior {
+        didSet {
+            defaults.set(
+                launcherShortcutBehavior.rawValue, forKey: Key.launcherShortcutBehavior.rawValue)
+        }
+    }
+
     /// Follow macOS, or pin Tinycast to one appearance. Applied by `AppCore.applyAppearance()`.
     var appearance: AppAppearance {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance.rawValue) }
@@ -715,6 +723,10 @@ final class AppSettings {
         escapeKeyBehavior =
             defaults.string(forKey: Key.escapeKeyBehavior.rawValue).flatMap(EscapeKeyBehavior.init)
             ?? .navigateBackOrClose
+        launcherShortcutBehavior =
+            defaults.string(forKey: Key.launcherShortcutBehavior.rawValue)
+            .flatMap(LauncherShortcutBehavior.init)
+            ?? .closeWindow
         appearance =
             defaults.string(forKey: Key.appearance.rawValue).flatMap(AppAppearance.init) ?? .system
         language = Self.storedLanguage

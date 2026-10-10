@@ -121,8 +121,12 @@ becomes the step back; a hidden one is being _summoned_, so the new screen is a 
 behind it. Every mode command and every global hotkey funnels through `showPalette`, which calls it —
 so typing "Clipboard History" at the root and pressing ↵ leaves a step back to the search that found
 it, while the Clipboard History hotkey does not. **The launcher is the exception, because it is the
-root** — ⌘Space over an open clipboard opens the root search with nothing behind it, rather than
-stacking the launcher over the screen it replaced. Nothing per-feature encodes this.
+root** — showing it over an open clipboard opens the root search with nothing behind it, rather than
+stacking the launcher over the screen it replaced. Nothing per-feature encodes this. By default the
+launcher's own hotkey never navigates: on a visible palette it hides from any depth, as Raycast's
+does, so a reopen inside Pop to Root Search restores the whole stack and a later one lands on the
+root. `LauncherShortcutBehavior` (General settings) under `popToRootOrClose` instead falls to the
+root search from a deeper screen, and hides only from the root.
 
 `PaletteState` holds the screens below `mode` as `[PaletteFrame]` — mode, query and selection, enough
 that returning looks like never having left — and offers four motions over it:

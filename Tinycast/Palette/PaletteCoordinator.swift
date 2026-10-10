@@ -55,8 +55,9 @@ final class PaletteCoordinator {
         windowController.isVisible && palette.mode == mode
     }
 
+    /// Closing from any depth, as Raycast does, lets a reopen inside Pop to Root Search restore it.
     func togglePalette() {
-        if isShowing(.launcher) {
+        if isShowing(.launcher) || (isVisible && settings.launcherShortcutBehavior == .closeWindow) {
             hidePalette()
         } else {
             showPalette(mode: .launcher, restoreAnyMode: true)

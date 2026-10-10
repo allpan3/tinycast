@@ -35,6 +35,7 @@ struct SettingsBackup: Codable {
         var automaticallyCheckForUpdates: Bool?
         var popToRootSeconds: Int?
         var escapeKeyBehavior: String?
+        var launcherShortcutBehavior: String?
         var appearance: String?
         var language: String?
         var calcNumberStyle: String?
@@ -149,6 +150,7 @@ extension SettingsBackup {
             automaticallyCheckForUpdates: s.automaticallyCheckForUpdates,
             popToRootSeconds: s.popToRootTimeout.rawValue,
             escapeKeyBehavior: s.escapeKeyBehavior.rawValue,
+            launcherShortcutBehavior: s.launcherShortcutBehavior.rawValue,
             appearance: s.appearance.rawValue,
             language: s.language.rawValue,
             calcNumberStyle: s.calcNumberStyle.rawValue,
@@ -365,6 +367,12 @@ extension SettingsBackup {
         }
         if let raw = s.escapeKeyBehavior, let behavior = EscapeKeyBehavior(rawValue: raw) {
             settings.escapeKeyBehavior = behavior
+            count += 1
+        }
+        if let raw = s.launcherShortcutBehavior,
+            let behavior = LauncherShortcutBehavior(rawValue: raw)
+        {
+            settings.launcherShortcutBehavior = behavior
             count += 1
         }
         if let raw = s.interfaceSize, let size = InterfaceSize(rawValue: raw) {

@@ -93,6 +93,7 @@ because the app rewrites the file.
     "automaticallyCheckForUpdates": true,
     "popToRootSeconds": 0,
     "escapeKeyBehavior": "navigateBackOrClose",
+    "launcherShortcutBehavior": "closeWindow",
     "autoSwitchInputSource": null,
     "supportReminders": true
   },
