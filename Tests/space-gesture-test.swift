@@ -57,6 +57,7 @@ struct SpaceGestureTests {
 
     static func main() {
         testDirection()
+        testNavigation()
         testFixedPoint()
         testCommonFields()
         testLegacyFields()
@@ -81,6 +82,44 @@ struct SpaceGestureTests {
             "exactly two commands are space switches")
         expect(SpaceDirection.next.reversed == .previous, "next reverses to previous")
         expect(SpaceDirection.previous.reversed == .next, "previous reverses to next")
+    }
+
+    // MARK: - Navigation
+
+    static func testNavigation() {
+        let identifiers: [UInt64] = [1, 46, 900]
+        func display(_ current: UInt64, spaces: [[String: Any]]? = nil) -> [String: Any] {
+            [
+                "Display Identifier": "display-a",
+                "Current Space": ["id64": current],
+                "Spaces": spaces ?? identifiers.enumerated().map {
+                    ["id64": $0.element, "type": $0.offset == 1 ? 4 : 0]
+                }
+            ]
+        }
+        let first = SpaceNavigation(display(1))!
+        expectEqual(first.destination(.previous), nil, "the left edge has no destination")
+        expectEqual(first.destination(.next), 46, "the next Space follows display order, including fullscreen")
+        let middle = SpaceNavigation(display(46))!
+        expectEqual(middle.destination(.previous), 1, "fullscreen can switch to the previous desktop")
+        expectEqual(middle.destination(.next), 900, "fullscreen can switch to the next desktop")
+        let last = SpaceNavigation(display(900))!
+        expectEqual(last.destination(.next), nil, "the right edge has no destination")
+        expectEqual(last.destination(.previous), 46, "sparse Space IDs do not affect navigation")
+        let single = SpaceNavigation(display(1, spaces: [["id64": UInt64(1)]]))!
+        expectEqual(single.destination(.previous), nil, "one Space has no previous neighbor")
+        expectEqual(single.destination(.next), nil, "one Space has no next neighbor")
+        expect(SpaceNavigation(display(2)) == nil, "an unknown current Space cannot start a gesture")
+        expect(SpaceNavigation(display(1, spaces: [])) == nil, "an empty display cannot start a gesture")
+        expect(SpaceNavigation(display(1, spaces: [["id64": UInt64(1)], [:]])) == nil,
+               "a missing ID cannot make an invalid neighbor disappear")
+        expect(SpaceNavigation(display(1, spaces: [["id64": UInt64(1)], ["id64": UInt64(1)]])) == nil,
+               "duplicate IDs cannot create a false neighbor")
+        expect(SpaceNavigation([:]) == nil, "missing display data is a quiet no-op")
+        var other = display(900)
+        other["Display Identifier"] = "display-b"
+        expectEqual(SpaceNavigation(other)?.displayIdentifier, "display-b", "each display retains its own identity")
+        expectEqual(first.currentSpace, 1, "a snapshot keeps the source Space for transition confirmation")
     }
 
     // MARK: - Fixed point
