@@ -398,6 +398,10 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   overlaps it; cancelling composition brings the placeholder back, and the list filters only once the
   candidate is committed — check on a second summon too, where first responder never moved
 - Typing filters instantly; ↑/↓ move the highlight and scroll it into view without yanking the list
+- Set Search Files' alias to a single Space in Settings: the field and launcher chip show `Space`,
+  and pressing Space at an empty root opens File Search. It survives relaunch, settings.json and
+  backup import; clearing it restores ordinary Space typing. Spaces in a non-empty root query,
+  submenu query, inline arguments and IME composition never activate it. Hidden entries cannot run
 - ⌃N/⌃P move the highlight as ↓/↑ do; ⌃F/⌃B step the emoji grid's selection, and the caret elsewhere
 - The highlight always sits on the row the footer pill describes
 - With a calculation typed, the calculator card is first and is selected first

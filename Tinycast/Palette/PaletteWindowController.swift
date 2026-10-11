@@ -392,6 +392,9 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             core.palette.prepare(mode: .launcher)
             return true
         }
+        panel.onBareSpace = { [weak self] in
+            self?.core.launcherCoordinator.launchSpaceAlias() ?? false
+        }
         installPasteMonitor()
         // Handled at the panel: a focused preview answers Escape before the palette's own handler.
         panel.onEscape = { [weak self] in

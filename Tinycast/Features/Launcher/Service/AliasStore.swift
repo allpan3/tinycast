@@ -18,9 +18,8 @@ final class AliasStore {
 
     func alias(for entryKey: String) -> String? { aliases[entryKey] }
 
-    /// Stored as typed — trimming here would eat the space mid-word — but blank still means none.
     func setAlias(_ alias: String, for entryKey: String) {
-        let value = alias.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : alias
+        let value = Self.storedValue(alias)
         guard aliases[entryKey] != value else { return }
         aliases[entryKey] = value
         revision &+= 1
@@ -37,9 +36,12 @@ final class AliasStore {
 
     /// Replace the whole table at once (used when importing a settings backup).
     func replace(_ new: [String: String]) {
-        // An import obeys the same rule as typing: blank means none, or it lands unclearable.
-        aliases = new.filter { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        aliases = new.compactMapValues(Self.storedValue)
         revision &+= 1
         defaults.set(aliases, forKey: defaultsKey)
+    }
+
+    private static func storedValue(_ alias: String) -> String? {
+        alias == " " || !alias.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? alias : nil
     }
 }

@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import SwiftUI
 
 @MainActor
@@ -151,6 +152,7 @@ struct PaletteMenuClickTests {
 
         let field = NSTextField(frame: NSRect(x: 80, y: 100, width: 250, height: 32))
         view.addSubview(field)
+        testSpaceEvents(panel: panel, state: state, field: field)
         let textArea = NSTextView(frame: NSRect(x: 80, y: 160, width: 250, height: 78))
         view.addSubview(textArea)
         for mode: PaletteMode in [.launcher, .quicklinkEditor] {
@@ -209,5 +211,64 @@ struct PaletteMenuClickTests {
     private static func textField(in view: NSView) -> NSTextField? {
         if let field = view as? NSTextField { return field }
         return view.subviews.lazy.compactMap { textField(in: $0) }.first
+    }
+
+    private static func testSpaceEvents(panel: PalettePanel, state: PaletteState, field: NSTextField) {
+        state.mode = .launcher
+        state.menuOpen = false
+        panel.makeFirstResponder(field)
+        guard let editor = panel.firstResponder as? NSTextView else {
+            check(false, "the native field editor takes focus")
+            return
+        }
+        var activations = 0
+        var consumes = true
+        panel.onBareSpace = {
+            activations += 1
+            return consumes
+        }
+        defer { panel.onBareSpace = nil }
+
+        func sendSpace(modifiers: NSEvent.ModifierFlags = [], repeating: Bool = false) {
+            guard let event = NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: modifiers,
+                timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: panel.windowNumber,
+                context: nil, characters: " ", charactersIgnoringModifiers: " ",
+                isARepeat: repeating, keyCode: UInt16(kVK_Space))
+            else {
+                check(false, "Space event creation")
+                return
+            }
+            panel.sendEvent(event)
+        }
+
+        editor.string = ""
+        sendSpace()
+        check(activations == 1 && editor.string.isEmpty, "a Space alias consumes the event before insertion")
+        consumes = false
+        sendSpace()
+        check(activations == 2 && editor.string == " ", "an unassigned Space types normally")
+        consumes = true
+        for modifier: NSEvent.ModifierFlags in [.shift, .control, .command, .option, .function] {
+            sendSpace(modifiers: modifier)
+        }
+        check(activations == 2, "modified Space never invokes the alias")
+        sendSpace(repeating: true)
+        check(activations == 2, "holding Space does not reactivate an alias")
+        state.menuOpen = true
+        sendSpace()
+        check(activations == 2, "a menu owns Space")
+        state.menuOpen = false
+        state.isComposing = true
+        sendSpace()
+        check(activations == 2, "palette composition owns Space")
+        state.isComposing = false
+        editor.setMarkedText(
+            "x", selectedRange: NSRange(location: 1, length: 0),
+            replacementRange: NSRange(location: NSNotFound, length: 0))
+        check(editor.hasMarkedText(), "the field editor has native marked text")
+        sendSpace()
+        check(activations == 2, "native marked text owns Space before palette composition updates")
+        editor.unmarkText()
     }
 }
