@@ -754,6 +754,12 @@ final class AppIndex {
     func orderedResults(
         query: String, visibility: VisibilityStore, favorites: FavoritesStore, hotKeys: HotKeyManager
     ) -> Results {
+        if query == " ", aliases.hasSpaceAlias {
+            let entries = orderedResults(
+                query: "", visibility: visibility, favorites: favorites, hotKeys: hotKeys
+            ).entries.filter { aliases.alias(for: $0.preferenceKey) == " " }
+            return Results(entries: entries, matchCount: entries.count)
+        }
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
         let showsSuggestions = settings?.launcherShowsSuggestions ?? true
         let usage = ranking.snapshot()

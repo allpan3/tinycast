@@ -398,19 +398,25 @@ one direction: an unwanted result is noticed while searching, so ⌘K can hide a
 back is still the pane's checkbox. Every pane built
 on `LauncherItemsSection` puts an `AliasField` on each row, dressed like the `ShortcutRecorder`
 beside it; edits store as typed, and an empty field means none. A single ASCII space is shown as
-`Space` in the field and launcher chip. Pressing bare Space at an empty launcher search immediately
-activates its visible entry through the usual launch path; it leaves spaces in non-empty queries,
-inline argument fields, menus, submenus and IME composition alone. If several visible entries have
-that alias, the first in the empty launcher's ordering wins. Other whitespace-only aliases are
-discarded. The settings list filters by **membership only**, keeping the index's name order —
-re-ranking it per keystroke
-would move the row being edited out from under its own field editor. A pane with a hand-written row
+`Space` in the field. Its adjacent activation menu offers `Press Enter` (↵) or `Open immediately`
+(⚡), with the same indicator in the launcher chip. New assignments require Enter; existing Space
+assignments retain immediate activation on upgrade, and can change it in the menu. Pressing Space
+at an empty launcher search lists its visible entries for confirmation, or activates the first one
+through the usual launch path if its choice is immediate. Spaces in non-empty queries, inline
+argument fields, menus, submenus and IME composition remain ordinary input. Only a single ASCII
+space can use immediate activation; letter aliases always require Enter. If several visible entries
+have Space, the first in the empty launcher's ordering wins. Other whitespace-only aliases are
+discarded. `DesignSystem/AliasField.swift` owns the editor and reads its accessible `Space` value
+without writing that word into its text storage. The settings list filters by **membership only**,
+keeping the index's name order — re-ranking it per keystroke would move the row being edited out from
+under its own field editor. A pane with a hand-written row
 hands `AliasField` the key itself: Settings ▸ Quicklinks passes `Quicklink.entryID`, Settings ▸
 Commands passes `CustomCommand.entryID`, Settings ▸ Extensions passes `extension:<name>/<command>`,
 Settings ▸ Window Management passes each command, custom size, layout and room's `AppEntry`, and each
 dims the field when the entry is hidden from launcher search, whose entry the ranker never sees.
 
-Aliases ride along in a settings backup (`launcherAliases`), and deleting what an alias points at —
+Aliases and their immediate choices ride along in a settings backup (`launcherAliases` and
+`launcherImmediateAliases`), and deleting what an alias points at —
 uninstalling an app, deleting a quicklink or custom command, uninstalling an extension — removes it
 with the entry's other per-entry preferences.
 
