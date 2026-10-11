@@ -77,6 +77,7 @@ struct LauncherScreen: PaletteScreen {
         let files = pinned == nil ? core.fileSearchCoordinator.launcherFiles(for: vm.query) : []
         let fallbacks = core.fallbackCoordinator.entries(for: vm.query)
         let pinsFavorites = vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !(vm.query == " " && core.aliases.hasSpaceAlias)
         let pinnedFavorites = favorites.orderedItems(
             entries: Array(results.prefix(ordered.favoriteCount)),
             files: pinsFavorites ? core.fileSearchCoordinator.favoriteFiles : [])
