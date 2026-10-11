@@ -128,7 +128,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `form-input-test` | Native field/textarea sizing, editing alignment, placeholders, Tab, Unicode selection, undo and code fonts |
 | `palette-placement-test` | `DesignSystem/Theme.swift`, `Palette/PalettePlacement.swift` |
 | `palette-menu-click-test` | `Palette/PalettePanel.swift` — complete click-away presses and subsequent control activation |
-| `alias-field-test` | The shipped alias field — Space display and accessibility keep native text unchanged, focus preserves the alias, and edits commit in both appearances |
+| `alias-field-test` | The shipped alias field — Space display and accessibility keep native text unchanged, the caret clears its label, focus preserves the alias, and edits commit in both appearances |
 | `hotkey-test` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `ModifierKey.swift`, `ModifierKeyDetector.swift`, `HotKeyBinding.swift`, `HotKeySpelling.swift`, `HyperKey.swift`, `HIDKeyMapping.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and the command→action mapping in `Launcher/Model/CommandID.swift` |
 | `hyper-key-test` | `HotKeys/Model/HIDKeyMapping.swift`, `HyperKeyConflictPolicy.swift`, `Service/KeyboardRemapper.swift` — mapping ownership, refused writes, crash recovery, device reconnection, Caps Lock and 🎤 remaps sharing a keyboard, conflict severities, Modifier Keys and Karabiner parsing |
 | `hotkey-dispatch-test` | `HotKeys/Service/HotKeyManager.swift` — Secure Input side isolation, shared Control registrations, press/release routing, recording and cancellation; isolated preferences and simulated Carbon registration |
@@ -432,8 +432,10 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   candidate is committed — check on a second summon too, where first responder never moved
 - Typing filters instantly; ↑/↓ move the highlight and scroll it into view without yanking the list
 - Set Search Files' alias to a single Space in Settings: the field displays one clean `Space` label
-  in Light and Dark, while focused and unfocused. A new alias shows ↵ and requires Space then Enter;
-  its activation menu can choose `Open immediately` (⚡), after which Space alone opens File Search.
+  in Light and Dark, while focused and unfocused; its blinking caret clears the label. A new alias
+  shows the Return symbol and requires Space then Enter; its activation menu can choose
+  `Open immediately`, after which Space alone opens File Search. Both indicators use monochrome
+  system symbols in Settings and the launcher.
   Both choices survive relaunch, settings.json and backup import; letter aliases always need Enter.
   Clearing the alias restores ordinary Space typing. Spaces in a non-empty root query,
   submenu query, inline arguments and IME composition never activate it. Hidden entries cannot run

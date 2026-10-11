@@ -398,9 +398,10 @@ one direction: an unwanted result is noticed while searching, so ⌘K can hide a
 back is still the pane's checkbox. Every pane built
 on `LauncherItemsSection` puts an `AliasField` on each row, dressed like the `ShortcutRecorder`
 beside it; edits store as typed, and an empty field means none. A single ASCII space is shown as
-`Space` in the field. Its adjacent activation menu offers `Press Enter` (↵) or `Open immediately`
-(⚡), with the same indicator in the launcher chip. New assignments require Enter; existing Space
-assignments retain immediate activation on upgrade, and can change it in the menu. Pressing Space
+`Space` in the field, with the caret placed after the label. Its adjacent activation menu offers
+`Press Enter` or `Open immediately`, with matching monochrome Return or lightning symbols in the
+launcher chip. New assignments require Enter; existing Space assignments retain immediate activation
+on upgrade, and can change it in the menu. Pressing Space
 at an empty launcher search lists its visible entries for confirmation, or activates the first one
 through the usual launch path if its choice is immediate. Spaces in non-empty queries, inline
 argument fields, menus, submenus and IME composition remain ordinary input. Only a single ASCII
