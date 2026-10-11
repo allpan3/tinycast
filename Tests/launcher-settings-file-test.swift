@@ -18,6 +18,8 @@ struct LauncherSettingsFileTest {
         testWaitingRecords()
         testDeletedWaitingRecord()
         testMovedShortcut()
+        testSpaceAlias()
+        testSpaceAliasMirror()
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
@@ -184,6 +186,48 @@ struct LauncherSettingsFileTest {
         AppEntry(
             id: bundleID, name: "Fixture", url: URL(fileURLWithPath: "/fixture"),
             bundleID: bundleID, kind: kind)
+    }
+
+    private static func testSpaceAlias() {
+        let suite = "space-alias-test-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let aliases = AliasStore(defaults: defaults)
+        let key = CommandID.searchFiles.rawValue
+        aliases.setAlias(" ", for: key)
+        check("a single Space is stored", aliases.alias(for: key) == " ")
+        check("Space survives reloading", AliasStore(defaults: defaults).alias(for: key) == " ")
+        let revision = aliases.revision
+        aliases.setAlias(" ", for: key)
+        check("saving Space again keeps the revision", aliases.revision == revision)
+        aliases.setAlias("", for: key)
+        check("an empty value clears Space", aliases.alias(for: key) == nil)
+        check("clearing Space is persisted", AliasStore(defaults: defaults).alias(for: key) == nil)
+        for blank in ["  ", "\t", "\n", " \t "] {
+            aliases.setAlias(blank, for: key)
+            check("other blank aliases are discarded", aliases.alias(for: key) == nil)
+        }
+        aliases.replace([key: " ", "blank": "  ", "empty": "", "normal": "files "])
+        check("backup import preserves Space", aliases.alias(for: key) == " ")
+        check("backup import rejects other blank aliases", aliases.aliases.count == 2)
+        check("normal aliases remain stored as typed", aliases.alias(for: "normal") == "files ")
+        check("imported Space is persisted", AliasStore(defaults: defaults).alias(for: key) == " ")
+    }
+
+    private static func testSpaceAliasMirror() {
+        let fixture = Fixture()
+        let binding = fixture.file.commandsBinding(for: .fileSearchCommands, owner: .fileSearch)
+        let key = CommandID.searchFiles.rawValue
+        check(
+            "settings.json accepts a Space alias",
+            binding.write(.object(["search-files": .object(["alias": " "])])).isEmpty)
+        check("settings.json applies Space", fixture.aliases.alias(for: key) == " ")
+        check("settings.json renders Space", binding.read()["search-files"]?["alias"] == " ")
+        check(
+            "settings.json can clear Space",
+            binding.write(.object(["search-files": .object(["alias": ""])])).isEmpty)
+        check("the cleared Space alias is gone", fixture.aliases.alias(for: key) == nil)
+        check("the cleared record no longer renders", binding.read()["search-files"] == nil)
     }
 
     private static func check(_ description: String, _ condition: @autoclosure () -> Bool) {
