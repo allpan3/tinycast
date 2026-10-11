@@ -42,6 +42,7 @@ enum ReleaseFeed {
     ) -> AvailableRelease? {
         guard !entry.draft, channel.accepts(prerelease: entry.prerelease),
             let version = AppVersion(entry.tagName),
+            version.localRevision == nil,
             // A tag disagreeing with the prerelease flag is a mis-published release, not an update.
             version.isPrerelease == entry.prerelease,
             let asset = asset(from: entry.assets, for: architecture)

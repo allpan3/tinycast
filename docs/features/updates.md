@@ -79,10 +79,14 @@ no appcast: the release feed the website already reads is the feed the app reads
 | `com.tinycast.app.beta` | `.beta` | prereleases |
 | anything else | `.development` | nothing |
 
-`AppVersion` parses `MAJOR.MINOR.PATCH` and `MAJOR.MINOR.PATCH-beta.N` with semver precedence: a
+Upstream uses `MAJOR.MINOR.PATCH` and `MAJOR.MINOR.PATCH-beta.N` with semver precedence: a
 prerelease sorts below the release it leads to, and `beta.10` above `beta.9`. Everything else parses
-to nil, so an off-shape tag can never be offered as an update. A release whose tag disagrees with
+to nil in the official feed, so an off-shape tag cannot be offered. A release whose tag disagrees with
 its `prerelease` flag is treated as mis-published and skipped.
+
+Local builds also parse `MAJOR.MINOR.PATCH.LOCAL_REVISION` for the running version and cache,
+with a positive revision. It sorts above the matching stable triple and below the next upstream
+triple; the official feed still rejects four-field tags.
 
 The Intel build is *not* a channel. It shares the stable tag, version, bundle id and signature, so it
 resolves to `.stable` like any other; `ReleaseArchitecture` picks its asset, and nothing about

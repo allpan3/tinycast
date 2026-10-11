@@ -47,7 +47,14 @@ struct UpdatesTests {
         expect(AppVersion("0.2.0-beta.1")?.isPrerelease == true, "a beta is a prerelease")
 
         expect(AppVersion("0.2") == nil, "rejects a two-part version")
-        expect(AppVersion("0.2.1.3") == nil, "rejects a four-part version")
+        expect(AppVersion("0.2.1.3")?.localRevision == 3, "reads a local release revision")
+        expect(AppVersion("v0.2.1.3")?.description == "0.2.1.3", "round-trips a local release tag")
+        expect(AppVersion("0.2.1.3")?.isPrerelease == false, "a local release follows its stable base")
+        expect(AppVersion("0.2.1.0") == nil, "local revisions start at one")
+        expect(AppVersion("0.2.1.3-beta.1") == nil, "local releases cannot also be betas")
+        expect(AppVersion("0.2.1.3.4") == nil, "rejects a fifth field")
+        expect(AppVersion("0.2.1.x") == nil, "rejects a non-numeric local revision")
+        expect(AppVersion("0.2.1.-1") == nil, "rejects a signed local revision")
         expect(AppVersion("0.2.x") == nil, "rejects a non-numeric field")
         expect(AppVersion("0.2.-1") == nil, "rejects a signed field")
         expect(AppVersion("0.2.0-alpha.1") == nil, "rejects a channel that never ships")
@@ -74,6 +81,12 @@ struct UpdatesTests {
             "beta counters compare numerically, not lexically")
         expect(version("0.3.0-beta.1") > version("0.2.9"), "a newer triple wins despite being beta")
         expect(version("0.2.1") == version("0.2.1"), "equal triples are equal")
+        expect(version("0.11.19.1") > version("0.11.19"), "a local release outranks its upstream base")
+        expect(version("0.11.19.10") > version("0.11.19.9"), "local revisions compare numerically")
+        expect(version("0.11.20") > version("0.11.19.99"), "the next upstream patch outranks local revisions")
+        expect(version("0.12.0") > version("0.11.19.99"), "the next upstream minor outranks local revisions")
+        expect(version("0.11.19.1") > version("0.11.19-beta.99"), "a local release outranks upstream betas")
+        expect(version("0.11.19.1") == version("0.11.19.1"), "equal local revisions are equal")
         expect(
             version("0.2.0-beta.1") != version("0.2.0"),
             "a prerelease is never equal to its release")
@@ -95,6 +108,11 @@ struct UpdatesTests {
         expect(
             (try? JSONDecoder().decode(AppVersion.self, from: Data("\"junk\"".utf8))) == nil,
             "a corrupt cached version fails to decode instead of defaulting")
+        let local = AppVersion("0.11.19.1")!
+        let localData = try? JSONEncoder().encode(local)
+        expect(
+            localData.flatMap { try? JSONDecoder().decode(AppVersion.self, from: $0) } == local,
+            "a local release survives the cache file")
     }
 
     // MARK: - ReleaseChannel
@@ -204,6 +222,11 @@ struct UpdatesTests {
             "an unparseable tag is skipped")
         expect(
             ReleaseFeed.newest(
+                from: feed(entry(tag: "v0.3.0.1", prerelease: false)), channel: .stable,
+                architecture: .appleSilicon) == nil,
+            "the official feed only accepts upstream version tags")
+        expect(
+            ReleaseFeed.newest(
                 from: feed(entry(tag: "v0.3.0-beta.1", prerelease: false)), channel: .stable,
                 architecture: .appleSilicon) == nil,
             "a beta tag flagged as a release is mis-published, not an update")
@@ -273,6 +296,12 @@ struct UpdatesTests {
         expect(
             ReleaseFeed.offer(newer, running: running, skipped: AppVersion("0.2.5")) != nil,
             "skipping one version does not skip the next one")
+        expect(
+            ReleaseFeed.offer(same, running: AppVersion("0.2.0.1")!, skipped: nil) == nil,
+            "upstream cannot replace a local release based on the same version")
+        expect(
+            ReleaseFeed.offer(newer, running: AppVersion("0.2.0.99")!, skipped: nil) != nil,
+            "a newer upstream base remains discoverable after local releases")
     }
 
     // MARK: - ReleaseNotes

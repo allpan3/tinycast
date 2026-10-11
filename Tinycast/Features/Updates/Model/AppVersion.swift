@@ -1,12 +1,13 @@
 import Foundation
 
-/// A released version: `MAJOR.MINOR.PATCH`, optionally `-beta.N`, ordered by semver precedence.
+/// Upstream semver, with an optional fourth field for a local release above its stable base.
 struct AppVersion: Comparable, Hashable, Sendable, CustomStringConvertible {
     let major: Int
     let minor: Int
     let patch: Int
     /// Nil on a stable release, which outranks every prerelease of the same triple.
     let beta: Int?
+    let localRevision: Int?
 
     init?(_ text: String) {
         var body = Substring(text.trimmingCharacters(in: .whitespacesAndNewlines))
@@ -15,11 +16,19 @@ struct AppVersion: Comparable, Hashable, Sendable, CustomStringConvertible {
 
         let halves = body.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
         let numbers = halves[0].split(separator: ".", omittingEmptySubsequences: false)
-        guard numbers.count == 3,
+        guard numbers.count == 3 || numbers.count == 4,
             let major = Self.number(numbers[0]),
             let minor = Self.number(numbers[1]),
             let patch = Self.number(numbers[2])
         else { return nil }
+
+        if numbers.count == 4 {
+            guard halves.count == 1, let revision = Self.number(numbers[3]), revision > 0
+            else { return nil }
+            localRevision = revision
+        } else {
+            localRevision = nil
+        }
 
         if halves.count == 2 {
             // `beta` is the only prerelease channel that ships, so anything else is unreadable.
@@ -39,6 +48,7 @@ struct AppVersion: Comparable, Hashable, Sendable, CustomStringConvertible {
 
     var description: String {
         let triple = "\(major).\(minor).\(patch)"
+        if let localRevision { return "\(triple).\(localRevision)" }
         return beta.map { "\(triple)-beta.\($0)" } ?? triple
     }
 
@@ -47,7 +57,7 @@ struct AppVersion: Comparable, Hashable, Sendable, CustomStringConvertible {
         if lhs.minor != rhs.minor { return lhs.minor < rhs.minor }
         if lhs.patch != rhs.patch { return lhs.patch < rhs.patch }
         switch (lhs.beta, rhs.beta) {
-        case (nil, nil): return false
+        case (nil, nil): return (lhs.localRevision ?? 0) < (rhs.localRevision ?? 0)
         // A prerelease leads to its release, so it sorts below one and never above it.
         case (.some, nil): return true
         case (nil, .some): return false
