@@ -123,6 +123,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `palette-placement-test` | `DesignSystem/Theme.swift`, `Palette/PalettePlacement.swift` |
 | `palette-menu-click-test` | `Palette/PalettePanel.swift` — complete click-away presses and subsequent control activation |
 | `alias-field-test` | The shipped alias field — Space display and accessibility keep native text unchanged, the caret aligns to its label's end, focus preserves the alias, and edits commit in both appearances |
+| `space-gesture-test` | Dock-swipe field tables and payload bytes, plus per-display Space order, fullscreen neighbors, both boundaries and malformed snapshots |
 | `hotkey-test` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `ModifierKey.swift`, `ModifierKeyDetector.swift`, `HotKeyBinding.swift`, `HotKeySpelling.swift`, `HyperKey.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and the command→action mapping in `Launcher/Model/CommandID.swift` |
 | `dictation-test` | `Dictation/Model/DictationModel.swift`, `DictationTextFormatter.swift` — model paths and text formatting |
 | `dictation-field-test` | Composer rebinding and teardown, field-scoped dictation cancellation, and queued insertion validity; synthetic capture and real AppKit editors |
@@ -758,6 +759,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A command with the Notes window focused places Notes, not the app behind it
 - Cycling, Restore, custom sizes and display moves all work on Notes and on Settings
 - Fullscreen on Settings toggles it; on the Notes window it does nothing
+- Next/Previous Space each move one desktop without a slide, including fullscreen Spaces;
+  outward presses at either edge and on a one-Space display do nothing, including rapid repeats
 - With the note switcher open a command places Notes; the switcher and HUDs are never placed
 - Rooms: create one from Switch Room; ⇥ glides the preview through its layouts; ↵ lands its windows
   with the gap, hides other apps and parks their extra windows; quitting, `kill -9` then relaunching, and

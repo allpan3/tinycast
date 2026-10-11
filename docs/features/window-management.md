@@ -16,7 +16,8 @@ entries and a still-registered shortcut moves nothing.
   every mixed-size setup.
 - **Nothing in this feature touches `backingScaleFactor`.** All three of `NSScreen.frame`, `visibleFrame`
   and AX coordinates are in points, so mixed-DPI correctness is automatic.
-- **`WindowCommand.swift`, `WindowPlacementEngine.swift`, `WindowActionMemory.swift` and `SpaceGesture.swift`
+- **`WindowCommand.swift`, `WindowPlacementEngine.swift`, `WindowActionMemory.swift`, `SpaceGesture.swift`
+  and `SpaceNavigation.swift`
   stay Foundation + CoreGraphics and pure** — no AX, no `NSScreen`, no clock (`WindowActionMemory`
   takes `now` as a parameter, `SpaceGesture` takes `timestamp`). Every `AXUIElement` call and the
   Cocoa↔AX flip live in `Service/`; every `CGEvent` call lives in `SpaceSwitcher.swift`.
@@ -40,10 +41,12 @@ entries and a still-registered shortcut moves nothing.
 | `Model/WindowPlacementEngine.swift`  | Foundation + CoreGraphics    | **Pure.** Every frame the commands produce                          |
 | `Model/WindowActionMemory.swift`     | Foundation + CoreGraphics    | **Pure.** Per-window cycle position and restore point               |
 | `Model/SpaceGesture.swift`           | Foundation                   | **Pure.** The Dock-swipe field tables and the IOHID payload bytes   |
+| `Model/SpaceNavigation.swift`        | Foundation                   | **Pure.** Per-display Space order and adjacent destinations        |
 | `Service/AXWindowAccess.swift`       | AppKit + ApplicationServices | `@MainActor`. Every `AXUIElement` call, and the one write sequence  |
 | `Service/AXScreens.swift`            | AppKit + ColorSync           | `@MainActor`. `AXGeometry`, the one coordinate flip                 |
 | `Service/WindowMover.swift`          | AppKit + ApplicationServices | `@MainActor`. Command policy: cycle, restore, fullscreen            |
 | `Service/SpaceSwitcher.swift`        | CoreGraphics                 | `@MainActor`. Every `CGEvent` call and the payload splice           |
+| `Service/SpaceAccess.swift`          | CoreGraphics                 | `@MainActor`. Read-only managed-display Space snapshots            |
 | `Service/WindowTarget.swift`         | AppKit                       | `@MainActor`. Which window a command acts on                        |
 | `Model/CustomWindowSize.swift`       | Foundation + CoreGraphics    | **Pure.** A custom size, its units and the frame it resolves to     |
 | `Model/CustomWindowSizeStore.swift`  | Foundation                   | The custom-size library, as JSON in `UserDefaults`                  |
@@ -57,7 +60,8 @@ applied in one pass — and **[Rooms](window-rooms.md)**, named sets of windows 
 display you are on while everything else steps back. Both share this feature's switch, its
 Accessibility grant and its gap setting.
 
-The first four compile into `Tests/window-command-test.swift` and `SpaceGesture.swift` compiles into
+The first four compile into `Tests/window-command-test.swift`; `SpaceGesture.swift` and
+`SpaceNavigation.swift` compile into
 `Tests/space-gesture-test.swift`, so none of them may gain an AppKit, SwiftUI or `NSScreen`
 dependency, and all must stay pure — `WindowActionMemory` takes `now` as a parameter rather than
 reading a clock. CoreGraphics is needed only because `CGRect`'s `Equatable` conformance lives in that
@@ -288,8 +292,9 @@ instead of animating it — about 56 ms against roughly 1100 ms for the system's
 Everything else was measured and rejected: `CGSManagedDisplaySetCurrentSpace` updates the bookkeeping
 but never performs the transition, so you keep looking at the same windows; a synthetic ⌃← is ignored
 because the Space hotkey only accepts real HID events; and driving System Events costs the full
-animation. The gesture is the only path that both works and skips the slide, and it needs no private
-framework linkage and no SIP change — only public `CGEvent` calls carrying undocumented field numbers.
+animation. The gesture is the only path that both works and skips the slide, and needs no SIP change.
+Switching uses public `CGEvent` calls carrying undocumented field numbers; boundary detection reads
+the managed-display Space list through dynamically resolved SkyLight functions.
 
 `SpaceSwitcher` posts three phases — began, changed, ended — to `.cgSessionEventTap`. A two-phase
 gesture is ignored. Fields 55 (`DockControl`), 110 (dock-swipe HID type), 132 (phase), 123 (horizontal
@@ -317,10 +322,16 @@ Three details are load-bearing and each was expensive to learn:
   happens. Tinycast is a resident menu-bar app, so this is free — but it is why a one-shot CLI cannot
   be used to reproduce a bug here.
 
-Boundaries are left to macOS. The private `CGSGetActiveSpace` lags behind the Dock after a synthetic
-switch, so a pre-check returns stale answers during exactly the rapid switching it would exist to
-protect; skipping it also means this feature links no private symbol at all. A second gesture arriving
-while one is in flight is dropped rather than queued, for the same reason the phases are paced.
+Before posting any phase, `SpaceAccess` reads the ordered Spaces and current Space for the display
+under the pointer. `SpaceNavigation` chooses the adjacent entry, including fullscreen Spaces;
+an outward press at either edge is a quiet no-op. Missing symbols or incomplete snapshots also
+post nothing. The swipe keeps that pointer location across all phases so it targets the display
+whose boundary was checked.
+
+The managed-display snapshot can lag behind the Dock while a synthetic switch completes.
+`SpaceSwitcher` keeps its in-flight guard until the snapshot confirms the destination, polling
+every 10 ms for at most one second. A second gesture while that confirmation is pending is dropped
+rather than queued, so a rapid repeat cannot use the old Space to swipe past the edge.
 
 The serialized `CGEvent` format is a big-endian tagged record list behind a version word, which
 `SpaceSwitcher` checks is `2` before splicing; a bumped version makes the command a quiet no-op rather
@@ -395,10 +406,11 @@ negative dimensions, off-screen results, non-determinism and, at step 0, drift o
 on each) and `WindowShortcutPresetPlan`: a fresh apply, a repeat apply, a replaced user key, a
 displaced command and an unrelated one left alone, plus when `matching` names a preset.
 
-`Tests/space-gesture-test.swift` (121 assertions) covers the other pure half: the fixed-point encoding
+`Tests/space-gesture-test.swift` covers the other pure half: the fixed-point encoding
 and its ±1 floor, both field tables and the sign convention shared between them, the ended-only fling
 on the augmented path, the payload's size, record offsets and every scalar in it, and the big-endian
-framing of the field-4205 record.
+framing of the field-4205 record. It also covers `SpaceNavigation`: both edges, one-Space displays,
+fullscreen entries, sparse IDs, per-display identity and malformed snapshots.
 
 Custom sizes are covered in `Tests/window-layout-test.swift`, beside the anchor grid they share: the
 entry id, unit clamping and conversion, exact frames on every fixture display, gap and offset
@@ -420,6 +432,6 @@ verification, particularly:
 5. Restore on a window Tinycast has never moved, and after a custom size.
 6. **Space switching, on the real desktop with three or more Spaces.** Next and Previous each move
    exactly one Space with no visible slide, in and out of a fullscreen Space, and a held shortcut does
-   not wedge the Dock or land two Spaces at once. A Space switch is not observable until it settles —
-   sampling sooner than about three seconds returns mid-transition state that reads as a dropped or
-   doubled move, which will make a working build look broken.
+   not wedge the Dock or land two Spaces at once. At the first and last Space, repeated outward
+   presses leave the desktop still, with no bounce or toast. Repeat after deleting a neighboring
+   Space and with only one desktop; the boundary is read afresh on every command.
