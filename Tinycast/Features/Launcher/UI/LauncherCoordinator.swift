@@ -73,6 +73,7 @@ final class LauncherCoordinator {
         ).entries
         guard let entry = entries.first(where: { core.aliases.alias(for: $0.preferenceKey) == " " })
         else { return false }
+        guard core.aliases.opensImmediately(for: entry.preferenceKey) else { return false }
         launch(entry)
         return true
     }
