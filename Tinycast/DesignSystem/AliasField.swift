@@ -5,6 +5,18 @@ private final class AliasTextView: NSTextView {
     override func accessibilityValue() -> String? {
         string == " " ? "Space" : super.accessibilityValue()
     }
+
+    func alignSpaceCaret() {
+        var inset: CGFloat = 0
+        if string == " ", let font {
+            let attributes: [NSAttributedString.Key: Any] = [.font: font]
+            inset = ("Space" as NSString).size(withAttributes: attributes).width
+            if selectedRange().location == 1 {
+                inset -= (" " as NSString).size(withAttributes: attributes).width
+            }
+        }
+        if textContainerInset.width != inset { textContainerInset.width = inset }
+    }
 }
 
 private struct AliasTextField: NSViewRepresentable {
@@ -15,7 +27,7 @@ private struct AliasTextField: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
-    func makeNSView(context: Context) -> NSTextView {
+    func makeNSView(context: Context) -> AliasTextView {
         let editor = AliasTextView()
         editor.delegate = context.coordinator
         editor.isRichText = false
@@ -33,16 +45,13 @@ private struct AliasTextField: NSViewRepresentable {
         return editor
     }
 
-    func updateNSView(_ editor: NSTextView, context: Context) {
+    func updateNSView(_ editor: AliasTextView, context: Context) {
         context.coordinator.field = self
         if editor.string != text { editor.string = text }
         editor.isEditable = isEnabled
         editor.isSelectable = isEnabled
         editor.textColor = isEnabled ? .labelColor : .disabledControlTextColor
-        editor.textContainerInset.width = text == " "
-            ? ("Space" as NSString).size(withAttributes: [
-                .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
-            ]).width + Theme.Spacing.xs : 0
+        editor.alignSpaceCaret()
         if !focused, editor.window?.firstResponder === editor {
             editor.window?.makeFirstResponder(nil)
         }
@@ -57,8 +66,13 @@ private struct AliasTextField: NSViewRepresentable {
         }
 
         func textDidChange(_ notification: Notification) {
-            guard let editor = notification.object as? NSTextView else { return }
+            guard let editor = notification.object as? AliasTextView else { return }
+            editor.alignSpaceCaret()
             field.text = editor.string
+        }
+
+        func textViewDidChangeSelection(_ notification: Notification) {
+            (notification.object as? AliasTextView)?.alignSpaceCaret()
         }
 
         func textView(
@@ -137,7 +151,7 @@ struct AliasField: View {
                 Menu {
                     Picker("Activation", selection: immediateActivation) {
                         Text("Press Enter").tag(false)
-                        Text("Open immediately").tag(true)
+                        Text("Open Immediately").tag(true)
                     }
                 } label: {
                     Image(systemName: aliases.opensImmediately(for: key) ? "bolt.fill" : "return")
@@ -147,7 +161,7 @@ struct AliasField: View {
                 .menuIndicator(.hidden)
                 .fixedSize()
                 .accessibilityLabel("Space alias activation for \(name): "
-                    + (aliases.opensImmediately(for: key) ? "Open immediately" : "Press Enter"))
+                    + (aliases.opensImmediately(for: key) ? "Open Immediately" : "Press Enter"))
                 .help(aliases.opensImmediately(for: key)
                     ? "Press Space to open immediately." : "Press Space, then Enter to open.")
             }
