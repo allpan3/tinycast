@@ -39,6 +39,10 @@ private struct AliasTextField: NSViewRepresentable {
         editor.isEditable = isEnabled
         editor.isSelectable = isEnabled
         editor.textColor = isEnabled ? .labelColor : .disabledControlTextColor
+        editor.textContainerInset.width = text == " "
+            ? ("Space" as NSString).size(withAttributes: [
+                .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
+            ]).width + Theme.Spacing.xs : 0
         if !focused, editor.window?.firstResponder === editor {
             editor.window?.makeFirstResponder(nil)
         }
