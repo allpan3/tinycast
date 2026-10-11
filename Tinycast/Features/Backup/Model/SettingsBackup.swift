@@ -14,6 +14,7 @@ struct SettingsBackup: Codable {
     var hiddenLauncherItems: [String]?
     var hiddenLauncherKinds: [String]?
     var launcherAliases: [String: String]?
+    var launcherImmediateAliases: [String]?
     var pinnedEmoji: [String]?
 
     /// Enums store by raw value, so an unknown one is ignored rather than failing.
@@ -250,6 +251,7 @@ extension SettingsBackup {
         backup.hiddenLauncherItems = Array(core.visibility.hiddenItemKeys)
         backup.hiddenLauncherKinds = Array(core.visibility.disabledKinds)
         backup.launcherAliases = core.aliases.aliases
+        backup.launcherImmediateAliases = core.aliases.immediateAliases.sorted()
         backup.pinnedEmoji = core.pinnedEmoji.glyphs
         return backup
     }
@@ -292,6 +294,9 @@ extension SettingsBackup {
             core.aliases.replace(launcherAliases)
             // Counted after the store, which drops blanks the file may carry.
             summary.aliases = core.aliases.aliases.count
+        }
+        if let launcherImmediateAliases {
+            core.aliases.replaceImmediateAliases(Set(launcherImmediateAliases))
         }
         if let pinnedEmoji {
             core.pinnedEmoji.replace(pinnedEmoji)

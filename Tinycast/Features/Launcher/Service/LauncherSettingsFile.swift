@@ -82,6 +82,17 @@ final class LauncherSettingsFile {
             })
     }
 
+    func immediateAliasesBinding(for key: SettingsFileKey) -> SettingsFileBinding {
+        SettingsFileBinding(
+            key,
+            read: { [aliases] in aliases.immediateAliases.sorted().settingsJSON },
+            write: { [aliases] json in
+                guard let keys = [String](settingsJSON: json) else { return [.invalidValue(key)] }
+                aliases.replaceImmediateAliases(Set(keys))
+                return []
+            })
+    }
+
     func applyInstalled() -> [SettingsFileIssue] {
         var issues: [SettingsFileIssue] = []
         for (key, var held) in bundleRecords {

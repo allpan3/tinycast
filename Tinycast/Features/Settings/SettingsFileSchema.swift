@@ -49,6 +49,7 @@ enum SettingsFileSchema {
         case .calcNumberStyle: return bind(settings, \.calcNumberStyle)
         case .launcherShowsSuggestions: return bind(settings, \.launcherShowsSuggestions)
         case .rootSearchSensitivity: return bind(settings, \.rootSearchSensitivity)
+        case .immediateAliases: return launcher.immediateAliasesBinding(for: key)
         case .applicationsEnabled: return launcher.kindBinding(for: key, kind: .application)
         case .searchScopes: return bind(settings, \.searchScopes) { SearchScopes.normalize($0) }
         case .applications: return launcher.appsBinding(for: key)

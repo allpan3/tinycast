@@ -20,6 +20,7 @@ struct LauncherSettingsFileTest {
         testMovedShortcut()
         testSpaceAlias()
         testSpaceAliasMirror()
+        testSpaceActivation()
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
@@ -228,6 +229,48 @@ struct LauncherSettingsFileTest {
             binding.write(.object(["search-files": .object(["alias": ""])])).isEmpty)
         check("the cleared Space alias is gone", fixture.aliases.alias(for: key) == nil)
         check("the cleared record no longer renders", binding.read()["search-files"] == nil)
+    }
+
+    private static func testSpaceActivation() {
+        let suite = "space-activation-test-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let aliases = AliasStore(defaults: defaults)
+        let key = CommandID.searchFiles.rawValue
+        aliases.setAlias(" ", for: key)
+        check("new Space aliases require Enter", !aliases.opensImmediately(for: key))
+        aliases.setOpensImmediately(true, for: key)
+        check("immediate activation is an explicit choice", aliases.opensImmediately(for: key))
+        check("the choice survives relaunch", AliasStore(defaults: defaults).opensImmediately(for: key))
+        aliases.setOpensImmediately(false, for: key)
+        check("the user can return to confirmation", !aliases.opensImmediately(for: key))
+        aliases.setOpensImmediately(true, for: key)
+        aliases.setAlias("files", for: key)
+        check("letter aliases cannot auto-activate", !aliases.opensImmediately(for: key))
+        aliases.setOpensImmediately(true, for: key)
+        check("letter aliases cannot opt into auto-activation", aliases.immediateAliases.isEmpty)
+        aliases.setAlias(" ", for: key)
+        check("reassigning Space defaults to confirmation", !aliases.opensImmediately(for: key))
+        aliases.setOpensImmediately(true, for: key)
+        aliases.removeKeys([key])
+        check("removing the entry also removes its choice", aliases.immediateAliases.isEmpty)
+        defaults.removeObject(forKey: "launcherImmediateAliases")
+        defaults.set([key: " "], forKey: "launcherAliases")
+        let existing = AliasStore(defaults: defaults)
+        check("existing Space assignments keep their behavior", existing.opensImmediately(for: key))
+        existing.setOpensImmediately(false, for: key)
+        check("confirmation persists for existing Space aliases", !AliasStore(defaults: defaults).opensImmediately(for: key))
+
+        let fixture = Fixture()
+        let binding = fixture.file.immediateAliasesBinding(for: .immediateAliases)
+        check("settings.json accepts per-entry choices", binding.write([key].settingsJSON).isEmpty)
+        fixture.aliases.setAlias(" ", for: key)
+        check("file order cannot discard a later alias's choice", fixture.aliases.opensImmediately(for: key))
+        check("settings.json writes the explicit choice", binding.read() == [key].settingsJSON)
+        check("invalid choices are reported", binding.write([true].settingsJSON).count == 1)
+        check("invalid choices preserve the current choice", fixture.aliases.opensImmediately(for: key))
+        check("settings.json can clear immediate choices", binding.write([String]().settingsJSON).isEmpty)
+        check("clearing choices restores confirmation", !fixture.aliases.opensImmediately(for: key))
     }
 
     private static func check(_ description: String, _ condition: @autoclosure () -> Bool) {

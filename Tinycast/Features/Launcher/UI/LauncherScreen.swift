@@ -80,6 +80,7 @@ struct LauncherScreen: PaletteScreen {
         let fallbacks = core.fallbackCoordinator.entries(for: vm.query)
         let entries = results.map(Row.entry) + fallbacks.map { Row.fallback($0.fallback, $0.entry) }
         let pinsFavorites = vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !(vm.query == " " && core.aliases.hasSpaceAlias)
         // At most one of them leads, so the flat index keeps a single-row offset.
         let meeting = pinsFavorites ? meeting : nil
         self.meeting = meeting
