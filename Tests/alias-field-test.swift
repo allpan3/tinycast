@@ -59,9 +59,10 @@ struct AliasFieldTests {
         for index in 0...1 {
             let range = NSRange(location: index, length: 0)
             editor.setSelectedRange(range)
+            settle(hosting)
             let caret = editor.firstRect(forCharacterRange: range, actualRange: nil)
-            check(caret.minX >= editorOrigin.x + labelWidth + Theme.Spacing.xxs,
-                  "Space's caret clears its label at position \(index) in \(appearance.rawValue)")
+            check(abs(caret.minX - editorOrigin.x - labelWidth) <= 1,
+                  "Space's caret sits at its label's end at position \(index) in \(appearance.rawValue)")
         }
         window.makeFirstResponder(nil)
         settle(hosting)
@@ -88,8 +89,8 @@ struct AliasFieldTests {
         editor.insertText(" ", replacementRange: NSRange(location: 0, length: 0))
         settle(hosting)
         let typedCaret = editor.firstRect(forCharacterRange: editor.selectedRange(), actualRange: nil)
-        check(typedCaret.minX >= editorOrigin.x + labelWidth + Theme.Spacing.xxs,
-              "typing Space moves the caret beyond its label")
+        check(abs(typedCaret.minX - editorOrigin.x - labelWidth) <= 1,
+              "typing Space places the caret at its label's end")
     }
 
     private static func settle(_ hosting: NSView) {
