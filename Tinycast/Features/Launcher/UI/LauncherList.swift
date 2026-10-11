@@ -282,11 +282,21 @@ private struct AppRow: View {
                     .lineLimit(1)
             }
             if let alias = aliases.alias(for: app.preferenceKey) {
-                Text(alias == " "
-                    ? (aliases.opensImmediately(for: app.preferenceKey) ? "Space ⚡" : "Space ↵") : alias)
+                HStack(spacing: metrics.spacing.xs) {
+                    Text(alias == " " ? "Space" : alias)
+                    if alias == " " {
+                        SymbolImage(
+                            name: aliases.opensImmediately(for: app.preferenceKey) ? "bolt.fill" : "return",
+                            size: metrics.typography.chipNSFont.pointSize, monochrome: true)
+                    }
+                }
                     .font(metrics.typography.rowTrailing)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(alias == " "
+                        ? "Space: " + (aliases.opensImmediately(for: app.preferenceKey)
+                            ? "Open immediately" : "Press Enter") : alias)
                     .padding(.horizontal, metrics.spacing.sm)
                     .padding(.vertical, metrics.spacing.xxs)
                     .background(

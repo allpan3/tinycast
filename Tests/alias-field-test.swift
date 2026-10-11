@@ -54,12 +54,22 @@ struct AliasFieldTests {
         window.makeFirstResponder(editor)
         settle(hosting)
         check(editor.string == " ", "focusing Space cannot turn it into the word Space")
+        let labelWidth = ("Space" as NSString).size(withAttributes: [.font: editor.font!]).width
+        let editorOrigin = window.convertPoint(toScreen: editor.convert(.zero, to: nil))
+        for index in 0...1 {
+            let range = NSRange(location: index, length: 0)
+            editor.setSelectedRange(range)
+            let caret = editor.firstRect(forCharacterRange: range, actualRange: nil)
+            check(caret.minX >= editorOrigin.x + labelWidth + Theme.Spacing.xxs,
+                  "Space's caret clears its label at position \(index) in \(appearance.rawValue)")
+        }
         window.makeFirstResponder(nil)
         settle(hosting)
         check(aliases.alias(for: key) == " ", "focus loss preserves the saved Space alias")
         aliases.setAlias("files", for: key)
         settle(hosting)
         check(editor.string == "files", "a normal alias still displays its actual text")
+        check(editor.textContainerInset.width == 0, "letter aliases keep their original editing area")
         check(editor.accessibilityValue() == "files", "normal alias accessibility stays native")
         aliases.setAlias(" ", for: key)
         settle(hosting)
@@ -74,6 +84,12 @@ struct AliasFieldTests {
         aliases.setAlias("", for: key)
         settle(hosting)
         check(editor.string.isEmpty, "clearing an alias empties the native editor")
+        window.makeFirstResponder(editor)
+        editor.insertText(" ", replacementRange: NSRange(location: 0, length: 0))
+        settle(hosting)
+        let typedCaret = editor.firstRect(forCharacterRange: editor.selectedRange(), actualRange: nil)
+        check(typedCaret.minX >= editorOrigin.x + labelWidth + Theme.Spacing.xxs,
+              "typing Space moves the caret beyond its label")
     }
 
     private static func settle(_ hosting: NSView) {
