@@ -433,7 +433,8 @@ run window-preset-test     Tinycast/Features/WindowManagement/Model/WindowComman
                            Tinycast/Platform/ASCIIKeyboardLayout.swift \
                            Tinycast/Features/HotKeys/Service/KeyShortcut.swift
 run space-gesture-test     Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
-                           Tinycast/Features/WindowManagement/Model/SpaceGesture.swift
+                           Tinycast/Features/WindowManagement/Model/SpaceGesture.swift \
+                           Tinycast/Features/WindowManagement/Model/SpaceNavigation.swift
 run window-layout-test     Tinycast/Features/WindowManagement/Model/WindowCommand.swift \
                            Tinycast/Features/WindowManagement/Model/WindowCycle.swift \
                            Tinycast/Features/WindowManagement/Model/WindowPlacementEngine.swift \

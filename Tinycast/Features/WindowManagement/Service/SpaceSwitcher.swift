@@ -12,10 +12,26 @@ final class SpaceSwitcher {
 
     /// A second gesture overlapping the first makes the Dock move two Spaces, so it is dropped.
     func perform(_ direction: SpaceDirection) {
-        guard gesture == nil, Permissions.ensureAccessibility() else { return }
+        guard gesture == nil, Permissions.ensureAccessibility(),
+            let point = CGEvent(source: nil)?.location,
+            let navigation = SpaceAccess.snapshot(at: point),
+            let destination = navigation.destination(direction)
+        else { return }
         gesture = Task {
-            await Self.post(direction)
+            await Self.post(direction, at: point)
+            await waitForSpace(destination, on: navigation.displayIdentifier)
             gesture = nil
+        }
+    }
+
+    private func waitForSpace(_ destination: UInt64, on displayIdentifier: String) async {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: .seconds(1))
+        while clock.now < deadline {
+            guard let navigation = SpaceAccess.snapshot(on: displayIdentifier),
+                navigation.currentSpace != destination
+            else { return }
+            do { try await Task.sleep(for: .milliseconds(10)) } catch { return }
         }
     }
 
@@ -24,11 +40,11 @@ final class SpaceSwitcher {
         UserDefaults.standard.object(forKey: "com.apple.swipescrolldirection") as? Bool ?? true
     }
 
-    private nonisolated static func post(_ direction: SpaceDirection) async {
+    private nonisolated static func post(_ direction: SpaceDirection, at point: CGPoint) async {
         // macOS 27 applies Natural Scrolling to a synthetic swipe, so the sign is undone here.
         let direction = augmentsEvents && naturalScrolling ? direction.reversed : direction
         for phase in SpaceGesture.Phase.allCases {
-            guard let event = event(phase: phase, direction: direction) else { return }
+            guard let event = event(phase: phase, direction: direction, at: point) else { return }
             event.post(tap: .cgSessionEventTap)
             guard augmentsEvents, phase != .ended else { continue }
             try? await Task.sleep(for: SpaceGesture.phaseDelay)
@@ -36,9 +52,10 @@ final class SpaceSwitcher {
     }
 
     private nonisolated static func event(
-        phase: SpaceGesture.Phase, direction: SpaceDirection
+        phase: SpaceGesture.Phase, direction: SpaceDirection, at point: CGPoint
     ) -> CGEvent? {
         guard let event = CGEvent(source: nil) else { return nil }
+        event.location = point
         // A freshly created event carries no timestamp, which the payload cannot be built without.
         let timestamp = mach_absolute_time()
         let fields = SpaceGesture.fields(
