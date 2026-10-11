@@ -397,8 +397,13 @@ per-invocation action, so the ⌘K menu stays out of it. Visibility is the one e
 one direction: an unwanted result is noticed while searching, so ⌘K can hide a row, but putting it
 back is still the pane's checkbox. Every pane built
 on `LauncherItemsSection` puts an `AliasField` on each row, dressed like the `ShortcutRecorder`
-beside it; edits store as typed and trim when the field loses focus, and a blank means none. That
-list filters by **membership only**, keeping the index's name order — re-ranking it per keystroke
+beside it; edits store as typed, and an empty field means none. A single ASCII space is shown as
+`Space` in the field and launcher chip. Pressing bare Space at an empty launcher search immediately
+activates its visible entry through the usual launch path; it leaves spaces in non-empty queries,
+inline argument fields, menus, submenus and IME composition alone. If several visible entries have
+that alias, the first in the empty launcher's ordering wins. Other whitespace-only aliases are
+discarded. The settings list filters by **membership only**, keeping the index's name order —
+re-ranking it per keystroke
 would move the row being edited out from under its own field editor. A pane with a hand-written row
 hands `AliasField` the key itself: Settings ▸ Quicklinks passes `Quicklink.entryID`, Settings ▸
 Commands passes `CustomCommand.entryID`, Settings ▸ Extensions passes `extension:<name>/<command>`,

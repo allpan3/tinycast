@@ -156,6 +156,7 @@ in `commands.builtIn` — by their ID after `command:`. App Launcher and Dictati
 ```
 
 - **A record left out has no shortcut, no alias, and is shown.**
+- An alias of `" "` assigns Space at an empty launcher search; an empty alias clears it.
 - **An invalid launcher record keeps its current values** and is reported; it is never a deletion.
 - **An app or pane Settings doesn't list waits** — not installed here, or outside the search scopes.
   Its record is not applied, is written back as read so a dotfile shared between Macs keeps it, and

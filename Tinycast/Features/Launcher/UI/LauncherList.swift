@@ -306,7 +306,7 @@ private struct AppRow: View {
                     .lineLimit(1)
             }
             if let alias = aliases.alias(for: app.preferenceKey) {
-                Text(alias)
+                Text(alias == " " ? "Space" : alias)
                     .font(metrics.typography.rowTrailing)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

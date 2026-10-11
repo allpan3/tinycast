@@ -391,6 +391,9 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             core.palette.prepare(mode: .launcher)
             return true
         }
+        panel.onBareSpace = { [weak self] in
+            self?.core.launcherCoordinator.launchSpaceAlias() ?? false
+        }
         installPasteMonitor()
         panel.onEscape = { [weak self] in
             guard let self else { return false }

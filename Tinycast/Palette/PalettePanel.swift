@@ -10,6 +10,7 @@ final class PalettePanel: NSPanel {
 
     /// Bare backspace, which the field editor swallows before `onKeyPress` could see it.
     var onBareBackspace: (() -> Bool)?
+    var onBareSpace: (() -> Bool)?
     /// Escape, which a focused form field answers before `onKeyPress` could see it.
     var onEscape: (() -> Bool)?
     /// Command chords the field editor swallows, plus the ones no main menu handles.
@@ -216,6 +217,16 @@ final class PalettePanel: NSPanel {
             event.modifierFlags.isDisjoint(with: [.command, .option, .control, .shift]),
             fieldEditor?.hasMarkedText() != true,
             onBareBackspace?() == true
+        {
+            return
+        }
+        if event.type == .keyDown,
+            Int(event.keyCode) == kVK_Space,
+            !event.isARepeat,
+            event.modifierFlags.isDisjoint(with: [.command, .option, .control, .shift, .function]),
+            fieldEditor?.hasMarkedText() != true,
+            paletteState?.isComposing != true,
+            onBareSpace?() == true
         {
             return
         }

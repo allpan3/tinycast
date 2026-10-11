@@ -398,6 +398,7 @@ private struct AliasTextField: NSViewRepresentable {
         editor.isEditable = isEnabled
         editor.isSelectable = isEnabled
         editor.textColor = isEnabled ? .labelColor : .disabledControlTextColor
+        editor.setAccessibilityValue(text == " " ? "Space" : text)
         if !focused, editor.window?.firstResponder === editor {
             editor.window?.makeFirstResponder(nil)
         }
@@ -474,10 +475,10 @@ struct AliasField: View {
         let shape = RoundedRectangle(cornerRadius: Theme.Radius.menu, style: .continuous)
         HStack(spacing: Theme.Spacing.xs) {
             ZStack(alignment: .leading) {
-                if draft.isEmpty {
-                    Text("Add Alias")
+                if draft.isEmpty || draft == " " {
+                    Text(draft.isEmpty ? "Add Alias" : "Space")
                         .font(Theme.Typography.keyCap)
-                        .foregroundStyle(Theme.Colors.textSecondary)
+                        .foregroundStyle(draft.isEmpty ? Theme.Colors.textSecondary : Theme.Colors.textPrimary)
                         .allowsHitTesting(false)
                         .accessibilityHidden(true)
                 }
@@ -519,7 +520,6 @@ struct AliasField: View {
         .accessibilityLabel("Alias for \(name)")
     }
 
-    /// The one commit path — ↵ or focus landing elsewhere; a blank draft removes the alias.
     private func commit() {
         aliases.setAlias(draft, for: key)
         draft = aliases.alias(for: key) ?? ""

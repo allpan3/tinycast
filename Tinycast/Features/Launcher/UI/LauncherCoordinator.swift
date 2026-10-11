@@ -19,7 +19,6 @@ final class LauncherCoordinator {
     private let notesCoordinator: NotesCoordinator
     private let extensionCoordinator: ExtensionCoordinator
     private let calendarCoordinator: CalendarCoordinator
-    /// The backup commands only, which need the live stores to gather from and apply to.
     private unowned let core: AppCore
 
     init(
@@ -61,6 +60,22 @@ final class LauncherCoordinator {
     }
 
     // MARK: - Activation
+
+    func launchSpaceAlias() -> Bool {
+        let palette = core.palette
+        guard palette.mode == .launcher, palette.query.isEmpty,
+            !palette.isComposing, !palette.isEditingField, !palette.menuOpen,
+            !palette.isControlListOpen
+        else { return false }
+
+        let entries = core.appIndex.orderedResults(
+            query: "", visibility: core.visibility, favorites: core.favorites, hotKeys: core.hotKeys
+        ).entries
+        guard let entry = entries.first(where: { core.aliases.alias(for: $0.preferenceKey) == " " })
+        else { return false }
+        launch(entry)
+        return true
+    }
 
     func launch(
         _ app: AppEntry, searchQuery: String? = nil, arguments: [String: String] = [:]
