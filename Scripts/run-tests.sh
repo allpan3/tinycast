@@ -291,6 +291,10 @@ run FormInputTests         Tinycast/Platform/Appearance.swift \
                            Tinycast/DesignSystem/InterfaceMetrics.swift \
                            Tinycast/DesignSystem/FormTextInput.swift \
                            Tinycast/DesignSystem/FormTextArea.swift
+run AliasFieldTests        Tinycast/Platform/Appearance.swift \
+                           Tinycast/DesignSystem/Theme.swift \
+                           Tinycast/DesignSystem/AliasField.swift \
+                           Tinycast/Features/Launcher/Service/AliasStore.swift
 run ScrollRevealTests      Tinycast/DesignSystem/Scrolling/SelectionReveal.swift
 run RedactionTests         Tinycast/DesignSystem/RedactedPlaceholder.swift
 run KeyboardFocusTests     Tinycast/DesignSystem/Interaction/KeyboardFocus.swift
