@@ -296,7 +296,7 @@ private struct AppRow: View {
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(alias == " "
                         ? "Space: " + (aliases.opensImmediately(for: app.preferenceKey)
-                            ? "Open immediately" : "Press Enter") : alias)
+                            ? "Open Immediately" : "Press Enter") : alias)
                     .padding(.horizontal, metrics.spacing.sm)
                     .padding(.vertical, metrics.spacing.xxs)
                     .background(
