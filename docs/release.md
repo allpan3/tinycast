@@ -3,6 +3,29 @@
 How a build reaches a user. The local development loop is in [development.md](development.md);
 the signing identity itself is in [signing.md](signing.md).
 
+## Fork releases
+
+The fork's rolling feature branch uses `UPSTREAM_MAJOR.UPSTREAM_MINOR.UPSTREAM_PATCH.LOCAL_REVISION`:
+`0.11.19.7` is local revision 7 based on upstream `v0.11.19`. Rebase the feature commits onto the
+latest upstream stable tag before changing the base, restart the local revision at 1, and never reuse
+a published version. The tracked workflow does not require the personal `docs/local-releases.md` file.
+
+Pushing an annotated `local/v<version>` tag starts `.github/workflows/fork-release.yml`. It builds
+Apple Silicon and universal packages on GitHub Actions, verifies signatures, helper architectures and
+the macOS 26 deployment floor, then publishes both DMG/ZIP pairs and provenance manifests in a GitHub
+Release. It signs `Tinycast.app` / `com.tinycast.app` with the same identity as the installed fork.
+
+Configure these on the fork before pushing a release tag:
+
+- `FORK_SIGNING_P12_BASE64` and `FORK_SIGNING_P12_PASSWORD`: Actions secrets containing only the fork's
+  stable signing identity, exported from its dedicated keychain.
+- `FORK_SIGNING_CERT_SHA1`: an Actions variable containing that certificate's SHA-1 fingerprint, which
+  the workflow checks after import.
+
+The packaging script also accepts `arm64` (default) or `universal` as its third argument. Local runs
+create the annotated release tag; Actions rebuilds the checked-out tag without changing it. Each
+manifest records the upstream tag and commit, source commit, architecture and package SHA-256 hashes.
+
 ## Packaging a DMG locally
 
 ```sh

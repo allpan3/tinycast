@@ -1,0 +1,126 @@
+name: Fork Release
+run-name: "Tinycast ${{ github.ref_name }}"
+
+on:
+  push:
+    tags: ['local/v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [arm64, universal]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Read release version and upstream base
+        id: meta
+        run: |
+          if [[ ! $GITHUB_REF_NAME =~ ^local/v([0-9]+\.[0-9]+\.[0-9]+)\.([1-9][0-9]*)$ ]]; then
+            echo "::error::Expected local/vMAJOR.MINOR.PATCH.REVISION"
+            exit 1
+          fi
+          echo "upstream_tag=v${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          echo "revision=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          git fetch https://github.com/abue-ammar/tinycast.git 'refs/tags/v*:refs/tags/v*'
+
+      - name: Select Xcode 26
+        run: |
+          XCODE_PATH="$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n1)"
+          test -n "$XCODE_PATH"
+          echo "DEVELOPER_DIR=$XCODE_PATH/Contents/Developer" >> "$GITHUB_ENV"
+
+      - name: Import the fork signing identity
+        env:
+          P12_BASE64: ${{ secrets.FORK_SIGNING_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.FORK_SIGNING_P12_PASSWORD }}
+          CERTIFICATE_SHA1: ${{ vars.FORK_SIGNING_CERT_SHA1 }}
+        run: |
+          test -n "$P12_BASE64" && test -n "$P12_PASSWORD" && test -n "$CERTIFICATE_SHA1"
+          KEYCHAIN="$RUNNER_TEMP/tinycast-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+          echo "::add-mask::$KEYCHAIN_PASSWORD"
+          printf '%s' "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/signing.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/signing.p12" -k "$KEYCHAIN" -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN"
+          rm "$RUNNER_TEMP/signing.p12"
+          security find-identity -p codesigning "$KEYCHAIN" | grep -F "$CERTIFICATE_SHA1"
+
+      - name: Build and verify packages
+        env:
+          UPSTREAM_TAG: ${{ steps.meta.outputs.upstream_tag }}
+          REVISION: ${{ steps.meta.outputs.revision }}
+          ARCHITECTURE: ${{ matrix.architecture }}
+        run: ./Scripts/build-local-release.sh "$UPSTREAM_TAG" "$REVISION" "$ARCHITECTURE"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Tinycast-${{ matrix.architecture }}
+          path: build/HostPackages/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove signing material
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/signing.p12"
+          if [[ -f "$RUNNER_TEMP/tinycast-signing.keychain-db" ]]; then
+            security delete-keychain "$RUNNER_TEMP/tinycast-signing.keychain-db"
+          fi
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: Tinycast-*
+          merge-multiple: true
+          path: dist
+
+      - name: Publish downloadable packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#local/v}"
+          cat > "$RUNNER_TEMP/release-notes.md" <<EOF
+          Built from upstream **v${VERSION%.*}** with local revision **${VERSION##*.}**.
+          Source commit: ${GITHUB_SHA}.
+
+          - Configurable launcher shortcut behavior in submenus, with state preserved while hidden.
+          - Space aliases with a choice of Press Enter or Open Immediately.
+          - Desktop switching avoids the boundary animation at the first and last Space.
+
+          Download the **arm64 DMG** for Apple Silicon, or the **universal DMG** for Intel.
+          Requires macOS 26 or later. The app is named **Tinycast.app** and uses the existing Tinycast settings.
+
+          This build uses the fork's stable self-signed certificate. After installing in Applications, run:
+
+          \`\`\`sh
+          xattr -dr com.apple.quarantine /Applications/Tinycast.app
+          \`\`\`
+
+          Grant Accessibility on each new Mac. ZIPs and SHA-256 manifests are also attached.
+          EOF
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --latest \
+            --title "Tinycast ${VERSION}" --notes-file "$RUNNER_TEMP/release-notes.md"
