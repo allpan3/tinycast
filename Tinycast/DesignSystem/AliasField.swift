@@ -3,14 +3,14 @@ import SwiftUI
 
 private final class AliasTextView: NSTextView {
     override func accessibilityValue() -> String? {
-        string == " " ? "Space" : super.accessibilityValue()
+        string == " " ? String(localized: "Space") : super.accessibilityValue()
     }
 
     func alignSpaceCaret() {
         var inset: CGFloat = 0
         if string == " ", let font {
             let attributes: [NSAttributedString.Key: Any] = [.font: font]
-            inset = ("Space" as NSString).size(withAttributes: attributes).width
+            inset = (String(localized: "Space") as NSString).size(withAttributes: attributes).width
             if selectedRange().location == 1 {
                 inset -= (" " as NSString).size(withAttributes: attributes).width
             }
@@ -160,8 +160,9 @@ struct AliasField: View {
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
                 .fixedSize()
-                .accessibilityLabel("Space alias activation for \(name): "
-                    + (aliases.opensImmediately(for: key) ? "Open Immediately" : "Press Enter"))
+                .accessibilityLabel(aliases.opensImmediately(for: key)
+                    ? "Space alias activation for \(name): Open Immediately"
+                    : "Space alias activation for \(name): Press Enter")
                 .help(aliases.opensImmediately(for: key)
                     ? "Press Space to open immediately." : "Press Space, then Enter to open.")
             }
