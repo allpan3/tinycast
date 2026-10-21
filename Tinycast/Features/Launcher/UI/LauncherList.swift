@@ -307,7 +307,7 @@ private struct AppRow: View {
             }
             if let alias = aliases.alias(for: app.preferenceKey) {
                 HStack(spacing: metrics.spacing.xs) {
-                    Text(alias == " " ? "Space" : alias)
+                    Text(alias == " " ? String(localized: "Space") : alias)
                     if alias == " " {
                         SymbolImage(
                             name: aliases.opensImmediately(for: app.preferenceKey) ? "bolt.fill" : "return",
@@ -318,9 +318,9 @@ private struct AppRow: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(alias == " "
-                        ? "Space: " + (aliases.opensImmediately(for: app.preferenceKey)
-                            ? "Open Immediately" : "Press Enter") : alias)
+                    .accessibilityLabel(alias != " " ? Text(verbatim: alias)
+                        : aliases.opensImmediately(for: app.preferenceKey)
+                            ? Text("Space: Open Immediately") : Text("Space: Press Enter"))
                     .padding(.horizontal, metrics.spacing.sm)
                     .padding(.vertical, metrics.spacing.xxs)
                     .background(

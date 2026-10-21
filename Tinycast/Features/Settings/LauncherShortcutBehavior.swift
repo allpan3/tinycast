@@ -9,8 +9,8 @@ enum LauncherShortcutBehavior: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .closeWindow: return "Hide launcher"
-        case .popToRootOrClose: return "Pop to root"
+        case .closeWindow: return String(localized: "Hide launcher")
+        case .popToRootOrClose: return String(localized: "Pop to root")
         }
     }
 }
