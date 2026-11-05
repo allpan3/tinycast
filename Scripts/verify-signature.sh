@@ -2,7 +2,9 @@
 # Assert a built app will notarize and can still prompt. Usage: verify-signature.sh <path-to-.app>
 set -uo pipefail
 
-APP="${1:?usage: verify-signature.sh <path-to-.app>}"
+APP="${1:?usage: verify-signature.sh <path-to-.app> [<self-signed identity>]}"
+# A fork release names its own identity, which stands in for the Developer ID it cannot have.
+SELF_SIGNED="${2:-}"
 NAME="$(basename "$APP" .app)"
 STATUS=0
 
@@ -34,8 +36,13 @@ for BIN in "$APP/Contents/MacOS/$NAME" "$APP/Contents/Helpers/ClipboardTextHelpe
     INFO="$(codesign -dv --verbose=2 "$BIN" 2>&1)"
     [[ "$INFO" =~ flags=0x[0-9a-f]+\([^\)]*runtime ]] ||
         fail "${BIN##*/}: hardened runtime not enabled"
-    [[ "$INFO" == *$'\nAuthority=Developer ID Application: '* && "$INFO" == *$'\nTimestamp='* ]] ||
-        fail "${BIN##*/}: not signed with a timestamped Developer ID"
+    if [ -n "$SELF_SIGNED" ]; then
+        [[ "$INFO" == *$'\nAuthority='"$SELF_SIGNED"$'\n'* ]] ||
+            fail "${BIN##*/}: not signed by $SELF_SIGNED"
+    else
+        [[ "$INFO" == *$'\nAuthority=Developer ID Application: '* && "$INFO" == *$'\nTimestamp='* ]] ||
+            fail "${BIN##*/}: not signed with a timestamped Developer ID"
+    fi
 done
 
 APP_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist")"

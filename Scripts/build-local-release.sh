@@ -93,7 +93,7 @@ if ! xcodebuild -project Tinycast.xcodeproj -scheme Tinycast -configuration Rele
 fi
 
 APP="$DERIVED/Build/Products/Release/Tinycast.app"
-./Scripts/verify-signature.sh "$APP"
+./Scripts/verify-signature.sh "$APP" "$IDENTITY"
 ACTUAL_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 [[ $ACTUAL_VERSION == "$VERSION" ]]
 [[ $(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist") == com.tinycast.app ]]
@@ -121,7 +121,7 @@ ln -s /Applications "$STAGE/Applications"
 diskutil image create from "$STAGE" --format UDZO --volumeName Tinycast "$DMG" >/dev/null
 ditto -c -k --keepParent --sequesterRsrc "$APP" "$ZIP"
 ditto -x -k "$ZIP" "$STAGE/zip-check"
-./Scripts/verify-signature.sh "$STAGE/zip-check/Tinycast.app"
+./Scripts/verify-signature.sh "$STAGE/zip-check/Tinycast.app" "$IDENTITY"
 
 LOCAL_COMMIT="$(git rev-parse HEAD)"
 python3 - "$MANIFEST" "$VERSION" "$UPSTREAM_TAG" "$UPSTREAM_COMMIT" "$LOCAL_COMMIT" "$ARCHITECTURE" "$DMG" "$ZIP" <<'PY'
