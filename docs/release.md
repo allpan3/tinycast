@@ -14,6 +14,8 @@ Pushing an annotated `local/v<version>` tag starts `.github/workflows/fork-relea
 Apple Silicon and universal packages on GitHub Actions, verifies signatures, helper architectures and
 the macOS 26 deployment floor, then publishes both DMG/ZIP pairs and provenance manifests in a GitHub
 Release. It signs `Tinycast.app` / `com.tinycast.app` with the same identity as the installed fork.
+The packaging script passes that identity to `verify-signature.sh`, which then checks every binary
+for it in place of upstream's timestamped Developer ID.
 
 Configure these on the fork before pushing a release tag:
 
