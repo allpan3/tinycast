@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -36,10 +36,12 @@ jobs:
           echo "revision=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
           git fetch https://github.com/abue-ammar/tinycast.git 'refs/tags/v*:refs/tags/v*'
 
-      - name: Select Xcode 26
+      - name: Select Xcode 27
         run: |
-          XCODE_PATH="$(ls -d /Applications/Xcode_26*.app | sort -V | tail -n1)"
+          # Real folders only: an image's Xcode_27.N.app symlink can point at a release candidate.
+          XCODE_PATH="$(find -E /Applications -maxdepth 1 -type d -regex '.*/Xcode_27(\.[0-9]+)*\.app' | sort -V | tail -n1)"
           test -n "$XCODE_PATH"
+          echo "Using $XCODE_PATH"
           echo "DEVELOPER_DIR=$XCODE_PATH/Contents/Developer" >> "$GITHUB_ENV"
 
       - name: Import the fork signing identity
