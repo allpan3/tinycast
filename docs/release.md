@@ -13,7 +13,7 @@ a published version. The tracked workflow does not require the personal `docs/lo
 Pushing an annotated `local/v<version>` tag starts `.github/workflows/fork-release.yml`. It builds
 Apple Silicon and universal packages on GitHub Actions, verifies signatures, helper architectures and
 the macOS 26 deployment floor, then publishes both DMG/ZIP pairs and provenance manifests in a GitHub
-Release. It signs `Tinycast.app` / `com.tinycast.app` with the same identity as the installed fork.
+Release. It signs `Tinycast.app` / `com.abueammar.tinycast` with the same identity as the installed fork.
 The packaging script passes that identity to `verify-signature.sh`, which then checks every binary
 for it in place of upstream's timestamped Developer ID.
 

@@ -84,7 +84,7 @@ echo "Building Tinycast ${VERSION} from ${UPSTREAM_TAG}…"
 if ! xcodebuild -project Tinycast.xcodeproj -scheme Tinycast -configuration Release \
     -destination 'platform=macOS' -derivedDataPath "$DERIVED" \
     ARCHS="$ARCHITECTURES" ONLY_ACTIVE_ARCH=NO \
-    PRODUCT_NAME=Tinycast TINYCAST_BUNDLE_IDENTIFIER=com.tinycast.app \
+    PRODUCT_NAME=Tinycast \
     MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$REVISION" \
     CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$IDENTITY" \
     OTHER_CODE_SIGN_FLAGS='--timestamp=none' build > "$BUILD_LOG" 2>&1; then
@@ -96,7 +96,7 @@ APP="$DERIVED/Build/Products/Release/Tinycast.app"
 ./Scripts/verify-signature.sh "$APP" "$IDENTITY"
 ACTUAL_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 [[ $ACTUAL_VERSION == "$VERSION" ]]
-[[ $(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist") == com.tinycast.app ]]
+[[ $(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist") == com.abueammar.tinycast ]]
 for BIN in "$APP/Contents/MacOS/Tinycast" "$APP/Contents/Helpers/ClipboardTextHelper" \
     "$APP/Contents/Helpers/Tinycast Dictation.app/Contents/MacOS/Tinycast Dictation"; do
     SLICES="$(lipo -archs "$BIN")"
@@ -136,7 +136,7 @@ data = {
     "upstreamTag": tag,
     "upstreamCommit": upstream,
     "localCommit": commit,
-    "bundleIdentifier": "com.tinycast.app",
+    "bundleIdentifier": "com.abueammar.tinycast",
     "architecture": architecture,
     "sha256": {Path(file).name: hashlib.sha256(Path(file).read_bytes()).hexdigest() for file in files},
 }
